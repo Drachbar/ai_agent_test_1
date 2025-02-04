@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.langchain4j:langchain4j-open-ai:1.0.0-alpha1");
+    implementation("dev.langchain4j:langchain4j-open-ai:1.0.0-alpha1")
     implementation("dev.langchain4j:langchain4j:1.0.0-alpha1")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
