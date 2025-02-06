@@ -13,17 +13,87 @@ import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
 
 public class Main {
+    private static final int PORT = 8080;
+    private static final String BASE_DIR = "public";
+
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        server.createContext("/chat", new ChatHandler());
+        server.createContext("/", new StaticFileHandler());
+        server.createContext("/api", new ApiHandler());
+        server.createContext("/api/chat", new ChatHandler());
         server.setExecutor(null); // Standard thread-pool
         server.start();
-        System.out.println("Server startad på http://localhost:8080/chat");
+        System.out.println("Server startad på http://localhost:" + PORT);
+    }
+
+    static class StaticFileHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String requestedPath = exchange.getRequestURI().getPath();
+            if (requestedPath.equals("/")) {
+                requestedPath = "/index.html"; // Standardfil om ingen specifik fil anges
+            }
+
+            File file = new File(BASE_DIR + requestedPath);
+            if (!file.exists() || file.isDirectory()) {
+                send404(exchange);
+                return;
+            }
+
+            // Sätt korrekt MIME-typ
+            String mimeType = getMimeType(requestedPath);
+            exchange.getResponseHeaders().set("Content-Type", mimeType);
+
+            // Läs och skicka filen
+            byte[] fileBytes = Files.readAllBytes(Paths.get(file.getPath()));
+            exchange.sendResponseHeaders(200, fileBytes.length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(fileBytes);
+            os.close();
+        }
+
+        private void send404(HttpExchange exchange) throws IOException {
+            String response = "404 - Not Found";
+            exchange.sendResponseHeaders(404, response.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+
+        private String getMimeType(String filePath) {
+            if (filePath.endsWith(".html")) return "text/html";
+            if (filePath.endsWith(".css")) return "text/css";
+            if (filePath.endsWith(".js")) return "application/javascript";
+            if (filePath.endsWith(".png")) return "image/png";
+            if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";
+            if (filePath.endsWith(".gif")) return "image/gif";
+            if (filePath.endsWith(".svg")) return "image/svg+xml";
+            return "application/octet-stream"; // Standard MIME-typ för okända filer
+        }
+    }
+
+    static class ApiHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                String response = "{ \"message\": \"API fungerar!\" }";
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, response.length());
+
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes(StandardCharsets.UTF_8));
+                os.close();
+            } else {
+                exchange.sendResponseHeaders(405, -1); // Method Not Allowed
+            }
+        }
     }
 
     static class ChatHandler implements HttpHandler {
