@@ -8,6 +8,8 @@ button.addEventListener('click', () => {
     doRequestToBackend(textArea.value)
 })
 
+fetch("/api").then(res => res.text()).then(text => console.log(text))
+
 function doRequestToBackend(question) {
 
     fetch("/api/chat", {
