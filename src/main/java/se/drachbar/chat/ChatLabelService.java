@@ -21,16 +21,17 @@ public class ChatLabelService {
                 .build();
     }
 
-    public String processQuery(String query) {
-        Response<AiMessage> answer = chatLanguageModel.generate(
+    public String processQuery(String query, String answer) {
+        Response<AiMessage> response = chatLanguageModel.generate(
                 new SystemMessage("""
                         You are a helpful AI agent, you are a part a part of an Ai-chain.
-                        Your only job is to look at the question and give the question a label so that the chat can be recognised.
+                        Your only job is to look at the question and the response another AI-agent has given and
+                        give the question a label so that the chat can be recognised.
                         The label must be short and cannot be longer than 50 characters.
                         """),
-                new UserMessage(query));
-        System.out.println("Label klar!");
-        return answer.content().text();
+                new UserMessage(query),
+                new AiMessage(answer));
+        return response.content().text();
     }
 
 }

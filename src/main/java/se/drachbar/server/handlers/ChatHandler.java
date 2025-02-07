@@ -2,6 +2,8 @@ package se.drachbar.server.handlers;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.drachbar.chat.ChatLabelService;
 import se.drachbar.chat.ChatService;
 import se.drachbar.chat.StreamingResponseHandler;
@@ -11,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 public class ChatHandler implements HttpHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ChatHandler.class);
     private final ChatService chatService;
     private final ChatLabelService chatLabelService;
 
@@ -38,19 +41,16 @@ public class ChatHandler implements HttpHandler {
         OutputStream outputStream = exchange.getResponseBody();
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
 
-
-
         StreamingResponseHandler responseHandler = new StreamingResponseHandler(writer, exchange, (fullResponse) -> {
             logQueryAndResponse(query, fullResponse);
-            System.out.println("chatService är klar?");
+            if (!labelExistsInLogFile()) {
+                final String label = chatLabelService.processQuery(query, fullResponse);
+                prependLabelInLogfile(label);
+            }
         });
 
         chatService.processQuery(query, responseHandler);
 
-        if (!labelExistsInLogFile()) {
-            final String label = chatLabelService.processQuery(query);
-            prependLabelInLogfile(label);
-        }
     }
 
     private String readRequestBody(HttpExchange exchange) {
@@ -73,7 +73,7 @@ public class ChatHandler implements HttpHandler {
             logWriter.write("Svar: " + response + "\n");
             logWriter.write("-------------------------------------------------\n");
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Fel vid logga svar: ", e);
         }
     }
 
@@ -89,7 +89,7 @@ public class ChatHandler implements HttpHandler {
             String firstLine = reader.readLine();
             return firstLine != null && firstLine.startsWith("Etikett: ");
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Fel vid läsning av fil: ", e);
         }
         return false;
     }
@@ -119,7 +119,7 @@ public class ChatHandler implements HttpHandler {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Fel vid skapandet av etikett: ", e);
         }
     }
 }
