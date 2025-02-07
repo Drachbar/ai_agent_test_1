@@ -1,6 +1,6 @@
 import { marked } from "../libs/marked.esm.min.js"
 
-const pTag = document.querySelector('section');
+const section = document.querySelector('section');
 const button = document.querySelector('button');
 const textArea = document.querySelector('textarea');
 
@@ -37,7 +37,7 @@ function doRequestToBackend(question) {
                             partialResponse += textChunk;
                             console.log(partialResponse)
 
-                            pTag.innerHTML = marked(partialResponse);
+                            section.innerHTML = marked(partialResponse);
 
                             controller.enqueue(value);
                             push();
