@@ -31,10 +31,23 @@ public class ChatRepository {
              PreparedStatement pstmt = conn.prepareStatement(sql)){
             pstmt.setString(1, chatMessage);
             pstmt.executeUpdate();
-            log.info("Chat message updated: {}", chatMessage);
         } catch (Exception e) {
             log.error("Error: ", e);
         }
+    }
+
+    public static String getLabel() {
+        String sql = "SELECT label FROM conversations WHERE id = 1";
+        try (Connection conn = SQLiteConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString("label");
+            }
+        } catch (Exception e) {
+            log.error("Error fetching label: ", e);
+        }
+        return null; // Returnera null om ingen label finns
     }
 
     public static void insertLabel(String label) {
@@ -43,7 +56,6 @@ public class ChatRepository {
              PreparedStatement pstmt = conn.prepareStatement(sql)){
             pstmt.setString(1, label);
             pstmt.executeUpdate();
-            log.info("Label updated: {}", label);
         } catch (Exception e) {
             log.error("Error: ", e);
         }
@@ -55,9 +67,7 @@ public class ChatRepository {
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                int generatedId = rs.getInt("id");
-                log.info("New conversation created with id: {}", generatedId);
-                return generatedId;
+                return rs.getInt("id");
             }
         } catch (Exception e) {
             log.error("Error: ", e);

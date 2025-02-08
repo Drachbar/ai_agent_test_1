@@ -1,11 +1,10 @@
 package se.drachbar.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import se.drachbar.chat.ChatLabelService;
 import se.drachbar.repository.ChatRepository;
 
 public class ChatLogService {
-    private static final Logger log = LoggerFactory.getLogger(ChatLogService.class);
+    private static final ChatLabelService chatLabelService = new ChatLabelService();
 
     public static void appendChatMessage(String newMessage) {
         // Hämta det befintliga chat-meddelandet
@@ -16,8 +15,19 @@ public class ChatLogService {
 
         // Uppdatera databasen med det nya meddelandet
         ChatRepository.updateChat(updatedChat);
+    }
 
-        log.info("New chat message appended: {}", newMessage);
+    public static void updateLabelIfMissing(String query, String fullResponse) {
+        String existingLabel = ChatRepository.getLabel();
+
+        // Om en label redan finns, gör ingenting
+        if (existingLabel != null && !existingLabel.isBlank()) {
+            return;
+        }
+
+        // Generera en ny label om ingen finns
+        String newLabel = chatLabelService.processQuery(query, fullResponse);
+        ChatRepository.insertLabel(newLabel);
     }
 
 }
