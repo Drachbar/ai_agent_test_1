@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import se.drachbar.chat.ChatLabelService;
 import se.drachbar.chat.ChatService;
 import se.drachbar.chat.StreamingResponseHandler;
+import se.drachbar.repository.ChatRepository;
+import se.drachbar.service.ChatLogService;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +44,7 @@ public class ChatHandler implements HttpHandler {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
 
         StreamingResponseHandler responseHandler = new StreamingResponseHandler(writer, exchange, (fullResponse) -> {
-            logQueryAndResponse(query, fullResponse);
+            ChatLogService.appendChatMessage(fullResponse);
             if (!labelExistsInLogFile()) {
                 final String label = chatLabelService.processQuery(query, fullResponse);
                 prependLabelInLogfile(label);
@@ -66,17 +68,6 @@ public class ChatHandler implements HttpHandler {
         exchange.close();
     }
 
-    private void logQueryAndResponse(String query, String response) {
-        String logFilePath = "chat_log.txt";
-        try (BufferedWriter logWriter = new BufferedWriter(new FileWriter(logFilePath, true))) {
-            logWriter.write("Fråga: " + query + "\n");
-            logWriter.write("Svar: " + response + "\n");
-            logWriter.write("-------------------------------------------------\n");
-        } catch (IOException e) {
-            log.error("Fel vid logga svar: ", e);
-        }
-    }
-
     private boolean labelExistsInLogFile() {
         String logFilePath = "chat_log.txt";
         File logFile = new File(logFilePath);
@@ -95,6 +86,8 @@ public class ChatHandler implements HttpHandler {
     }
 
     private void prependLabelInLogfile(String label) {
+        ChatRepository.insertLabel(label);
+
         String logFilePath = "chat_log.txt";
         File logFile = new File(logFilePath);
 
