@@ -20,6 +20,11 @@ public class ChatService {
                 .apiKey(Config.getOpenAiApiKey())
                 .modelName(GPT_4_O_MINI)
                 .build();
+//        this.chatModel = OpenAiStreamingChatModel.builder()
+//                .baseUrl("http://localhost:11434/v1")
+//                .apiKey("s")
+//                .modelName("deepseek-r1:14b")
+//                .build();
     }
 
     public void processQuery(String query, StreamingResponseHandler responseHandler) {

@@ -1,6 +1,6 @@
 import { marked } from "../libs/marked.esm.min.js"
 
-const section = document.querySelector('section');
+const article = document.querySelector('article');
 const button = document.querySelector('button');
 const textArea = document.querySelector('textarea');
 
@@ -11,7 +11,6 @@ button.addEventListener('click', () => {
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 
 function doRequestToBackend(question) {
-
     fetch("/api/chat", {
         method: "POST",
         body: question
@@ -20,6 +19,14 @@ function doRequestToBackend(question) {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let partialResponse = "";
+            let partialThinking = "";
+            let isThinking = false;
+            const thinkArticle = document.querySelector(".thinking");
+            const details = document.createElement('details');
+            details.open = true;
+            const summary = document.createElement('summary');
+            summary.innerText = "Klicka här för att se resonemanget";
+
 
             return new ReadableStream({
                 start(controller) {
@@ -33,11 +40,27 @@ function doRequestToBackend(question) {
                             const textChunk = decoder.decode(value, {stream: true});
                             console.log("Mottagen chunk:", textChunk);
 
-                            // Lägg till den mottagna texten i pTag
-                            partialResponse += textChunk;
-                            console.log(partialResponse)
+                            if (textChunk === "<think>") {
+                                isThinking = true;
+                                thinkArticle.prepend(details)
+                            }
 
-                            section.innerHTML = marked(partialResponse);
+                            if (textChunk === "</think>")
+                                isThinking = false;
+
+
+                            if (isThinking) {
+                                if (textChunk !== "<think>") {
+                                    partialThinking += textChunk;
+                                    console.log(partialThinking)
+                                    details.innerHTML = marked(partialThinking);
+                                    details.prepend(summary);
+                                }
+                            } else if (textChunk !== "</think>") {
+                                partialResponse += textChunk;
+                                console.log(partialResponse)
+                                article.innerHTML = marked(partialResponse);
+                            }
 
                             controller.enqueue(value);
                             push();
