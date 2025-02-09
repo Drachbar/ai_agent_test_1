@@ -36,7 +36,7 @@ public class ChatHandler implements HttpHandler {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
 
         StreamingResponseHandler responseHandler = new StreamingResponseHandler(writer, exchange, (fullResponse) -> {
-            ChatLogService.appendChatMessage(fullResponse);
+            ChatLogService.appendChatMessage(query, fullResponse);
             ChatLogService.updateLabelIfMissing(query, fullResponse);
         });
 
