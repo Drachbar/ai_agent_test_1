@@ -17,33 +17,33 @@ public class ChatRepository {
     private static final Logger log = LoggerFactory.getLogger(ChatRepository.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static String getChat() {
+    public static ConversationDto getChat() {
+        String jsonData = null;
+
         String sql = "SELECT chat FROM conversations WHERE id = 1";
         try (Connection conn = SQLiteConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
-                return rs.getString("chat");
+                jsonData = rs.getString("chat");
             }
         } catch (Exception e) {
             log.error("Error fetching chat: ", e);
         }
-        return ""; // Tom sträng om inget finns
+        if (jsonData != null) {
+            try {
+                return objectMapper.readValue(jsonData, ConversationDto.class);
+            } catch (JsonProcessingException e) {
+                log.error("Error processing json: ", e);
+                throw new RuntimeException(e);
+            }
+        }
+
+        return new ConversationDto(List.of()); // Tom sträng om inget finns
     }
 
-//    public static void updateChatOld(String chatMessage) {
-//        String sql = "UPDATE conversations SET chat = ? WHERE id = 1";
-//        try (Connection conn = SQLiteConnection.connect();
-//             PreparedStatement pstmt = conn.prepareStatement(sql)){
-//            pstmt.setString(1, chatMessage);
-//            pstmt.executeUpdate();
-//        } catch (Exception e) {
-//            log.error("Error: ", e);
-//        }
-//    }
-
     public static void updateChat(final List<MessageDto> messages) {
-        String jsonString = null;
+        String jsonString;
         try {
             jsonString = objectMapper.writeValueAsString(new ConversationDto(messages));
         } catch (JsonProcessingException e) {
