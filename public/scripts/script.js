@@ -11,9 +11,17 @@ button.addEventListener('click', () => {
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 
 function doRequestToBackend(question) {
+    const requestData = {
+        query: question,
+        id: 1 // För nuvarande sätter vi ID till 1
+    };
+
     fetch("/api/chat", {
         method: "POST",
-        body: question
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestData)
     })
         .then(response => {
             const reader = response.body.getReader();

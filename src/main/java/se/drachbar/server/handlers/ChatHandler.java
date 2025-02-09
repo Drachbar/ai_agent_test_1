@@ -1,9 +1,11 @@
 package se.drachbar.server.handlers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import se.drachbar.chat.ChatService;
 import se.drachbar.chat.StreamingResponseHandler;
+import se.drachbar.model.ChatRequestDto;
 import se.drachbar.service.ChatLogService;
 
 import java.io.*;
@@ -11,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 
 public class ChatHandler implements HttpHandler {
     private final ChatService chatService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ChatHandler() {
         this.chatService = new ChatService();
@@ -23,11 +26,14 @@ public class ChatHandler implements HttpHandler {
             return;
         }
 
-        String query = readRequestBody(exchange);
-        if (query.isEmpty()) {
-            sendErrorResponse(exchange, "Tom fråga!", 400);
+        final ChatRequestDto chatRequest = readRequestBody(exchange);
+        if (chatRequest == null || chatRequest.query() == null || chatRequest.query().isEmpty()) {
+            sendErrorResponse(exchange, "Tom fråga eller ogiltig JSON!", 400);
             return;
         }
+
+        final String query = chatRequest.query();
+        final int id = chatRequest.id();
 
         exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=UTF-8");
         exchange.sendResponseHeaders(200, 0);
@@ -44,11 +50,13 @@ public class ChatHandler implements HttpHandler {
 
     }
 
-    private String readRequestBody(HttpExchange exchange) {
-        InputStream requestBody = exchange.getRequestBody();
-        return new BufferedReader(new InputStreamReader(requestBody, StandardCharsets.UTF_8))
-                .lines()
-                .reduce("", (acc, line) -> acc + line);
+    private ChatRequestDto readRequestBody(HttpExchange exchange) {
+        try (InputStream requestBody = exchange.getRequestBody()) {
+            return objectMapper.readValue(requestBody, ChatRequestDto.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null; // Returnerar null om JSON inte kunde tolkas
+        }
     }
 
     private void sendErrorResponse(HttpExchange exchange, String message, int statusCode) throws IOException {
