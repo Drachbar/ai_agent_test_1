@@ -13,8 +13,12 @@ import java.util.stream.Stream;
 public class ChatLogService {
     private static final ChatLabelService chatLabelService = new ChatLabelService();
 
+    public static List<MessageDto> getChatMessages(int id) {
+        return ChatRepository.getChat(id).messages();
+    }
+
     public static void appendChatMessage(String query, String newMessage) {
-        final ConversationDto conversation = ChatRepository.getChat();
+        final ConversationDto conversation = ChatRepository.getChat(1);
         final List<MessageDto> oldMessages = conversation.messages();
 
         final UserMessageDto userMessageDto = new UserMessageDto(query);

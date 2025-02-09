@@ -3,17 +3,23 @@ package se.drachbar.server.handlers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.drachbar.chat.ChatService;
 import se.drachbar.chat.StreamingResponseHandler;
 import se.drachbar.model.ChatRequestDto;
+import se.drachbar.model.MessageDto;
+import se.drachbar.repository.ChatRepository;
 import se.drachbar.service.ChatLogService;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ChatHandler implements HttpHandler {
     private final ChatService chatService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger log = LoggerFactory.getLogger(ChatRepository.class);
 
     public ChatHandler() {
         this.chatService = new ChatService();
@@ -45,8 +51,9 @@ public class ChatHandler implements HttpHandler {
             ChatLogService.appendChatMessage(query, fullResponse);
             ChatLogService.updateLabelIfMissing(query, fullResponse);
         });
+        List<MessageDto> prevChats = ChatLogService.getChatMessages(id);
 
-        chatService.processQuery(query, responseHandler);
+        chatService.processQuery(query, responseHandler, prevChats);
 
     }
 
@@ -54,7 +61,7 @@ public class ChatHandler implements HttpHandler {
         try (InputStream requestBody = exchange.getRequestBody()) {
             return objectMapper.readValue(requestBody, ChatRequestDto.class);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Fel vid inläsning av data: ", e);
             return null; // Returnerar null om JSON inte kunde tolkas
         }
     }

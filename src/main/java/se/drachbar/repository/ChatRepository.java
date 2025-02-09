@@ -17,13 +17,14 @@ public class ChatRepository {
     private static final Logger log = LoggerFactory.getLogger(ChatRepository.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static ConversationDto getChat() {
+    public static ConversationDto getChat(final int id) {
         String jsonData = null;
 
-        String sql = "SELECT chat FROM conversations WHERE id = 1";
+        String sql = "SELECT chat FROM conversations WHERE id = ?";
         try (Connection conn = SQLiteConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 jsonData = rs.getString("chat");
             }
@@ -53,7 +54,7 @@ public class ChatRepository {
 
         String sql = "UPDATE conversations SET chat = ? WHERE id = 1";
         try (Connection conn = SQLiteConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)){
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, jsonString);
             pstmt.executeUpdate();
         } catch (Exception e) {
@@ -78,7 +79,7 @@ public class ChatRepository {
     public static void insertLabel(String label) {
         String sql = "UPDATE conversations SET label = ? WHERE id = 1";
         try (Connection conn = SQLiteConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)){
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, label);
             pstmt.executeUpdate();
         } catch (Exception e) {
