@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    application
 }
 
 group = "se.drachbar"
@@ -10,7 +11,6 @@ val openAiKey: String by project
 tasks.withType<JavaExec> {
     environment("OPENAI_API_KEY", openAiKey)
 }
-
 
 repositories {
     mavenCentral()
@@ -27,6 +27,12 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
+
+// Lägg till application-konfiguration
+application {
+    mainClass.set("se.drachbar.Main") // Ändra till din faktiska main-klass
+}
+
 
 tasks.test {
     useJUnitPlatform()

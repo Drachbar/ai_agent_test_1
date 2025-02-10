@@ -9,6 +9,7 @@ button.addEventListener('click', () => {
 })
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
+fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => console.log(jsonRes));
 
 function doRequestToBackend(question) {
     const requestData = {

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.drachbar.chat.ChatService;
 import se.drachbar.chat.StreamingResponseHandler;
+import se.drachbar.model.ChatListDto;
 import se.drachbar.model.ChatRequestDto;
 import se.drachbar.model.MessageDto;
 import se.drachbar.repository.ChatRepository;
@@ -27,6 +28,14 @@ public class ChatHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        String requestMethod = exchange.getRequestMethod();
+        String requestPath = exchange.getRequestURI().getPath();
+
+        if ("GET".equalsIgnoreCase(requestMethod) && requestPath.equals("/api/chat/get-all")) {
+            handleGetAllChats(exchange);
+            return;
+        }
+
         if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
             exchange.sendResponseHeaders(405, -1); // 405 Method Not Allowed
             return;
@@ -55,6 +64,24 @@ public class ChatHandler implements HttpHandler {
 
         chatService.processQuery(query, responseHandler, prevChats);
 
+    }
+
+    private void handleGetAllChats(final HttpExchange exchange) throws IOException {
+        final ChatListDto chatListDto = ChatRepository.getAllChats();
+        final String responseJson = objectMapper.writeValueAsString(chatListDto);
+
+        // Debugging
+        System.out.println(responseJson);
+        System.out.println(responseJson.getBytes(StandardCharsets.UTF_8).length); // Korrekt längd
+
+        byte[] responseBytes = responseJson.getBytes(StandardCharsets.UTF_8);
+
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.sendResponseHeaders(200, responseBytes.length);
+
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(responseBytes);
+        }
     }
 
     private ChatRequestDto readRequestBody(HttpExchange exchange) {
