@@ -1,6 +1,7 @@
 import { marked } from "../libs/marked.esm.min.js"
 
-const article = document.getElementById('conversation');
+const conversation = document.getElementById('conversation');
+const chatHistoryElement = document.getElementById('chat-history');
 const chatsElement = document.getElementById('chats');
 const button = document.querySelector('button');
 const textArea = document.querySelector('textarea');
@@ -13,7 +14,6 @@ button.addEventListener('click', () => {
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
-    console.log(jsonRes.chatList)
     chatList = jsonRes.chatList;
 
     populateChats(chatList)
@@ -79,7 +79,7 @@ function doRequestToBackend(question) {
                             } else if (textChunk !== "</think>") {
                                 partialResponse += textChunk;
                                 console.log(partialResponse)
-                                article.innerHTML = marked(partialResponse);
+                                conversation.innerHTML = marked(partialResponse);
                             }
 
                             controller.enqueue(value);
@@ -112,8 +112,19 @@ function populateChats(chats) {
 }
 
 function populateConversation(conversation) {
+    const fragment = document.createDocumentFragment();
+
     conversation.messages.forEach(message => {
-        console.log(message.type)
-        console.log(message.text)
-    })
+        // Skapa ett nytt fragment
+        const tempFragment = document.createDocumentFragment();
+        // Skapa ett temporärt element för att konvertera HTML-strängen till DOM-noder
+        const tempElement = document.createElement("template");
+        tempElement.innerHTML = marked(message.text);
+        // Lägg till innehållet i tempElement i det temporära fragmentet
+        tempFragment.appendChild(tempElement.content);
+        // Lägg till det temporära fragmentet i huvudfragmentet
+        fragment.appendChild(tempFragment);
+    });
+
+    chatHistoryElement.replaceChildren(fragment);
 }
