@@ -1,15 +1,26 @@
 import { marked } from "../libs/marked.esm.min.js"
 
-const article = document.querySelector('article');
+const article = document.getElementById('conversation');
+const chatsElement = document.getElementById('chats');
 const button = document.querySelector('button');
 const textArea = document.querySelector('textarea');
+
+let chatList;
 
 button.addEventListener('click', () => {
     doRequestToBackend(textArea.value)
 })
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
-fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => console.log(jsonRes));
+fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
+    console.log(jsonRes.chatList)
+    chatList = jsonRes.chatList;
+
+    populateChats(chatList)
+
+    const conversation = chatList.find(chat => chat.id === 1).conversation;
+    populateConversation(conversation);
+});
 
 function doRequestToBackend(question) {
     const requestData = {
@@ -85,4 +96,24 @@ function doRequestToBackend(question) {
         .then(text => console.log("Hela svaret:", text))
         .catch(error => console.error("Fel vid hämtning:", error));
 
+}
+
+function populateChats(chats) {
+    const fragment = document.createDocumentFragment();
+
+    chats.forEach(chat => {
+        const li = document.createElement('li');
+        li.innerText = chat.label;
+        li.setAttribute('data-chat-id', chat.id)
+        fragment.appendChild(li);
+    });
+
+    chatsElement.replaceChildren(fragment);
+}
+
+function populateConversation(conversation) {
+    conversation.messages.forEach(message => {
+        console.log(message.type)
+        console.log(message.text)
+    })
 }

@@ -36,11 +36,15 @@ public class ChatHandler implements HttpHandler {
             return;
         }
 
-        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(405, -1); // 405 Method Not Allowed
+        if ("POST".equalsIgnoreCase(requestMethod) && requestPath.equals("/api/chat")) {
+            handleChatRequest(exchange);
             return;
         }
 
+        exchange.sendResponseHeaders(405, -1); // 405 Method Not Allowed
+    }
+
+    private void handleChatRequest(HttpExchange exchange) throws IOException {
         final ChatRequestDto chatRequest = readRequestBody(exchange);
         if (chatRequest == null || chatRequest.query() == null || chatRequest.query().isEmpty()) {
             sendErrorResponse(exchange, "Tom fråga eller ogiltig JSON!", 400);
@@ -63,7 +67,6 @@ public class ChatHandler implements HttpHandler {
         List<MessageDto> prevChats = ChatLogService.getChatMessages(id);
 
         chatService.processQuery(query, responseHandler, prevChats);
-
     }
 
     private void handleGetAllChats(final HttpExchange exchange) throws IOException {

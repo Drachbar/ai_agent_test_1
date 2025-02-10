@@ -1,0 +1,50 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: grid;
+    grid-template-columns: 250px 1fr; /* Sidopanel + Huvudinnehåll */
+    height: 100vh; /* Full höjd */
+    overflow: hidden; /* Förhindra att hela sidan scrollar */
+}
+
+#chats {
+    background: #f0f0f0; /* Lätt grå bakgrund */
+    padding: 10px;
+    overflow-y: auto; /* Scroll för många chatts */
+    border-right: 1px solid #ccc; /* Separationslinje */
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrerar innehållet horisontellt */
+    justify-content: space-between; /* Fördelar innehållet */
+    padding: 20px;
+    overflow-y: auto; /* Scroll för långt innehåll */
+}
+
+#ai-response {
+    flex-grow: 1; /* Låter konversationen växa */
+    width: 100%;
+    max-width: 800px; /* Begränsa bredden */
+    overflow-y: auto; /* Scrollbar om det blir mycket text */
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+textarea {
+    width: 100%;
+    max-width: 800px;
+    height: 100px;
+    margin-top: 10px;
+    resize: vertical;
+}
+
+button {
+    width: 100px;
+    margin-top: 10px;
+}
