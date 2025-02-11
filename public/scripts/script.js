@@ -1,12 +1,16 @@
-import { marked } from "../libs/marked.esm.min.js"
+"use strict"
 
-const conversation = document.getElementById('conversation');
+import {marked} from "../libs/marked.esm.min.js"
+
+const conversationElement = document.getElementById('conversation');
 const chatHistoryElement = document.getElementById('chat-history');
 const chatsElement = document.getElementById('chats');
 const button = document.querySelector('button');
 const textArea = document.querySelector('textarea');
+const thinkArticle = document.querySelector(".thinking");
 
 let chatList;
+let conversation;
 
 button.addEventListener('click', () => {
     doRequestToBackend(textArea.value)
@@ -18,7 +22,7 @@ fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
 
     populateChats(chatList)
 
-    const conversation = chatList.find(chat => chat.id === 1).conversation;
+    conversation = chatList.find(chat => chat.id === 1).conversation;
     populateConversation(conversation);
 });
 
@@ -41,7 +45,6 @@ function doRequestToBackend(question) {
             let partialResponse = "";
             let partialThinking = "";
             let isThinking = false;
-            const thinkArticle = document.querySelector(".thinking");
             const details = document.createElement('details');
             details.open = true;
             const summary = document.createElement('summary');
@@ -79,7 +82,7 @@ function doRequestToBackend(question) {
                             } else if (textChunk !== "</think>") {
                                 partialResponse += textChunk;
                                 console.log(partialResponse)
-                                conversation.innerHTML = marked(partialResponse);
+                                conversationElement.innerHTML = marked(partialResponse);
                             }
 
                             controller.enqueue(value);
@@ -93,7 +96,22 @@ function doRequestToBackend(question) {
         })
         .then(stream => new Response(stream))
         .then(response => response.text())
-        .then(text => console.log("Hela svaret:", text))
+        .then(text => {
+            console.log("Hela svaret:", text)
+            const newestquery = {
+                type: "UserMessage",
+                text: requestData.query
+            }
+            const newestAnswer = {
+                type: "AIMessage",
+                text: text
+            };
+            conversation.messages.push(newestquery);
+            conversation.messages.push(newestAnswer);
+            populateConversation(conversation);
+            conversationElement.replaceChildren();
+            thinkArticle.replaceChildren();
+        })
         .catch(error => console.error("Fel vid hämtning:", error));
 
 }
@@ -111,10 +129,10 @@ function populateChats(chats) {
     chatsElement.replaceChildren(fragment);
 }
 
-function populateConversation(conversation) {
+function populateConversation(newConversationToReplaceOld) {
     const fragment = document.createDocumentFragment();
 
-    conversation.messages.forEach(message => {
+    newConversationToReplaceOld.messages.forEach(message => {
         // Skapa ett nytt fragment
         const tempFragment = document.createDocumentFragment();
         // Skapa ett temporärt element för att konvertera HTML-strängen till DOM-noder
