@@ -36,9 +36,6 @@ public class ChatHandler implements HttpHandler {
             return;
         }
 
-        System.out.println(requestMethod);
-        System.out.println(requestPath);
-
         if ("POST".equalsIgnoreCase(requestMethod) && requestPath.equals("/api/chat/new-conversation")) {
             handleCreateNewConversation(exchange);
             return;
