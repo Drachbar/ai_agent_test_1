@@ -32,6 +32,13 @@ function doRequestToBackend(question) {
         id: 1 // För nuvarande sätter vi ID till 1
     };
 
+    const newestquery = {
+        type: "UserMessage",
+        text: question
+    }
+    conversation.messages.push(newestquery);
+    populateConversation(conversation);
+
     fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -98,15 +105,10 @@ function doRequestToBackend(question) {
         .then(response => response.text())
         .then(text => {
             console.log("Hela svaret:", text)
-            const newestquery = {
-                type: "UserMessage",
-                text: requestData.query
-            }
             const newestAnswer = {
                 type: "AIMessage",
                 text: text
             };
-            conversation.messages.push(newestquery);
             conversation.messages.push(newestAnswer);
             populateConversation(conversation);
             conversationElement.replaceChildren();
