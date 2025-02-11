@@ -77,7 +77,7 @@ public class ChatRepository {
         return new ConversationDto(List.of()); // Tom sträng om inget finns
     }
 
-    public static void updateChat(final List<MessageDto> messages) {
+    public static void updateChat(final List<MessageDto> messages, int id) {
         String jsonString;
         try {
             jsonString = objectMapper.writeValueAsString(new ConversationDto(messages));
@@ -86,21 +86,23 @@ public class ChatRepository {
             throw new RuntimeException(e);
         }
 
-        String sql = "UPDATE conversations SET chat = ? WHERE id = 1";
+        String sql = "UPDATE conversations SET chat = ? WHERE id = ?";
         try (Connection conn = SQLiteConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, jsonString);
+            pstmt.setInt(2, id);
             pstmt.executeUpdate();
         } catch (Exception e) {
             log.error("Error: ", e);
         }
     }
 
-    public static String getLabel() {
-        String sql = "SELECT label FROM conversations WHERE id = 1";
+    public static String getLabel(int id) {
+        String sql = "SELECT label FROM conversations WHERE id = ?";
         try (Connection conn = SQLiteConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("label");
             }
@@ -110,11 +112,12 @@ public class ChatRepository {
         return null; // Returnera null om ingen label finns
     }
 
-    public static void insertLabel(String label) {
-        String sql = "UPDATE conversations SET label = ? WHERE id = 1";
+    public static void insertLabel(String label, int id) {
+        String sql = "UPDATE conversations SET label = ? WHERE id = ?";
         try (Connection conn = SQLiteConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, label);
+            pstmt.setInt(2, id);
             pstmt.executeUpdate();
         } catch (Exception e) {
             log.error("Error: ", e);

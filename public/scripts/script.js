@@ -5,16 +5,20 @@ import {marked} from "../libs/marked.esm.min.js"
 const conversationElement = document.getElementById('conversation');
 const chatHistoryElement = document.getElementById('chat-history');
 const chatsElement = document.getElementById('chats');
-const button = document.querySelector('button');
+const sendChatButton = document.getElementById('send-chat');
+const newConversationButton = document.getElementById('new-conversation');
 const textArea = document.querySelector('textarea');
 const thinkArticle = document.querySelector(".thinking");
 
 let chatList;
 let conversation;
+let currentConversationId = 1;
 
-button.addEventListener('click', () => {
+sendChatButton.addEventListener('click', () => {
     doRequestToBackend(textArea.value)
 })
+
+newConversationButton.addEventListener('click', createNewConversation);
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
@@ -29,7 +33,7 @@ fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
 function doRequestToBackend(question) {
     const requestData = {
         query: question,
-        id: 1 // För nuvarande sätter vi ID till 1
+        id: currentConversationId // För nuvarande sätter vi ID till 1
     };
 
     const newestquery = {
@@ -118,12 +122,27 @@ function doRequestToBackend(question) {
 
 }
 
+function createNewConversation() {
+    fetch("/api/chat/new-conversation", {
+        method: "POST"
+    })
+        .then(response => response.json())
+        .then(res => {
+            currentConversationId = res.id;
+            chatHistoryElement.replaceChildren();
+            conversation.messages = [];
+        })
+}
+
 function populateChats(chats) {
     const fragment = document.createDocumentFragment();
 
     chats.forEach(chat => {
         const li = document.createElement('li');
-        li.innerText = chat.label;
+        if (!!chat.label)
+            li.innerText = chat.label;
+        else
+            li.innerText = "New chat";
         li.setAttribute('data-chat-id', chat.id)
         fragment.appendChild(li);
     });

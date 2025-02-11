@@ -11,7 +11,7 @@ body {
     overflow: hidden; /* Förhindra att hela sidan scrollar */
 }
 
-#chats {
+aside {
     background: #f0f0f0; /* Lätt grå bakgrund */
     padding: 10px;
     overflow-y: auto; /* Scroll för många chatts */

@@ -17,8 +17,8 @@ public class ChatLogService {
         return ChatRepository.getChat(id).messages();
     }
 
-    public static void appendChatMessage(String query, String newMessage) {
-        final ConversationDto conversation = ChatRepository.getChat(1);
+    public static void appendChatMessage(String query, String newMessage, int id) {
+        final ConversationDto conversation = ChatRepository.getChat(id);
         final List<MessageDto> oldMessages = conversation.messages();
 
         final UserMessageDto userMessageDto = new UserMessageDto(query);
@@ -26,11 +26,11 @@ public class ChatLogService {
         final List<MessageDto> messages = List.of(userMessageDto, aiMessageDto);
         final List<MessageDto> combinedMessages = Stream.concat(oldMessages.stream(), messages.stream()).toList();
 
-        ChatRepository.updateChat(combinedMessages);
+        ChatRepository.updateChat(combinedMessages, id);
     }
 
-    public static void updateLabelIfMissing(String query, String fullResponse) {
-        String existingLabel = ChatRepository.getLabel();
+    public static void updateLabelIfMissing(String query, String fullResponse, int id) {
+        String existingLabel = ChatRepository.getLabel(id);
 
         // Om en label redan finns, gör ingenting
         if (existingLabel != null && !existingLabel.isBlank()) {
@@ -39,7 +39,7 @@ public class ChatLogService {
 
         // Generera en ny label om ingen finns
         String newLabel = chatLabelService.processQuery(query, fullResponse);
-        ChatRepository.insertLabel(newLabel);
+        ChatRepository.insertLabel(newLabel, id);
     }
 
 }

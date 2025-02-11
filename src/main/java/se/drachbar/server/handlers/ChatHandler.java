@@ -36,6 +36,14 @@ public class ChatHandler implements HttpHandler {
             return;
         }
 
+        System.out.println(requestMethod);
+        System.out.println(requestPath);
+
+        if ("POST".equalsIgnoreCase(requestMethod) && requestPath.equals("/api/chat/new-conversation")) {
+            handleCreateNewConversation(exchange);
+            return;
+        }
+
         if ("POST".equalsIgnoreCase(requestMethod) && requestPath.equals("/api/chat")) {
             handleChatRequest(exchange);
             return;
@@ -61,8 +69,8 @@ public class ChatHandler implements HttpHandler {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
 
         StreamingResponseHandler responseHandler = new StreamingResponseHandler(writer, exchange, (fullResponse) -> {
-            ChatLogService.appendChatMessage(query, fullResponse);
-            ChatLogService.updateLabelIfMissing(query, fullResponse);
+            ChatLogService.appendChatMessage(query, fullResponse, id);
+            ChatLogService.updateLabelIfMissing(query, fullResponse, id);
         });
         List<MessageDto> prevChats = ChatLogService.getChatMessages(id);
 
@@ -76,6 +84,20 @@ public class ChatHandler implements HttpHandler {
         // Debugging
         System.out.println(responseJson);
         System.out.println(responseJson.getBytes(StandardCharsets.UTF_8).length); // Korrekt längd
+
+        byte[] responseBytes = responseJson.getBytes(StandardCharsets.UTF_8);
+
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.sendResponseHeaders(200, responseBytes.length);
+
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(responseBytes);
+        }
+    }
+
+    private void handleCreateNewConversation(final HttpExchange exchange) throws IOException {
+        final int conversationId = ChatRepository.createConversation();
+        String responseJson = objectMapper.writeValueAsString(new IdResponse(conversationId));
 
         byte[] responseBytes = responseJson.getBytes(StandardCharsets.UTF_8);
 
@@ -101,4 +123,6 @@ public class ChatHandler implements HttpHandler {
         exchange.getResponseBody().write(message.getBytes(StandardCharsets.UTF_8));
         exchange.close();
     }
+
+    private record IdResponse(int id) {}
 }
