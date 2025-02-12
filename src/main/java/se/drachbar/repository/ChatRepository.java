@@ -51,6 +51,41 @@ public class ChatRepository {
         return new ChatListDto(chatList);
     }
 
+    public static ChatDto getChat2(final int id) {
+        String jsonData;
+
+        String sql = "SELECT label, chat FROM conversations WHERE id = ?";
+        try (Connection conn = SQLiteConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (!rs.next()) {
+                log.error("No results for id: {}", id);
+                return null;
+            }
+
+            String label = rs.getString("label");
+            jsonData = rs.getString("chat");
+            System.out.println(jsonData);
+
+            ConversationDto conversation = new ConversationDto(List.of()); // Default tom lista
+            try {
+                if (jsonData != null && !jsonData.isBlank())
+                    conversation = objectMapper.readValue(jsonData, ConversationDto.class);
+            } catch (JsonProcessingException e) {
+                log.error("Error processing JSON for chat id {}: ", id, e);
+            }
+
+            return new ChatDto(id, label, conversation);
+
+        } catch (Exception e) {
+            log.error("Error fetching chat: ", e);
+        }
+
+        return null;
+    }
+
     public static ConversationDto getChat(final int id) {
         String jsonData = null;
 

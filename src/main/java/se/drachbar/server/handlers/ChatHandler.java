@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.drachbar.chat.ChatService;
 import se.drachbar.chat.StreamingResponseHandler;
+import se.drachbar.model.ChatDto;
 import se.drachbar.model.ChatListDto;
 import se.drachbar.model.ChatRequestDto;
 import se.drachbar.model.MessageDto;
@@ -15,7 +16,10 @@ import se.drachbar.service.ChatLogService;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ChatHandler implements HttpHandler {
     private final ChatService chatService;
@@ -33,6 +37,11 @@ public class ChatHandler implements HttpHandler {
 
         if ("GET".equalsIgnoreCase(requestMethod) && requestPath.equals("/api/chat/get-all")) {
             handleGetAllChats(exchange);
+            return;
+        }
+
+        if ("GET".equalsIgnoreCase(requestMethod) && requestPath.contains("/api/chat/get-chat")) {
+            handleGetChatById(exchange);
             return;
         }
 
@@ -74,36 +83,71 @@ public class ChatHandler implements HttpHandler {
         chatService.processQuery(query, responseHandler, prevChats);
     }
 
+
+    private void handleGetChatById(final HttpExchange exchange) throws IOException {
+        final GetChatByIdRequestDto request = readQueryParameterChatById(exchange);
+        if (request == null) {
+            sendErrorResponse(exchange, "Tom fråga eller ogiltig JSON!", 400);
+            return;
+        }
+
+        final int id = request.id();
+
+        final ChatDto chat = ChatRepository.getChat2(id);
+        sendJsonResponse(exchange, chat, 200);
+    }
+
     private void handleGetAllChats(final HttpExchange exchange) throws IOException {
         final ChatListDto chatListDto = ChatRepository.getAllChats();
-        final String responseJson = objectMapper.writeValueAsString(chatListDto);
+        sendJsonResponse(exchange, chatListDto, 200);
+    }
 
-        // Debugging
-        System.out.println(responseJson);
-        System.out.println(responseJson.getBytes(StandardCharsets.UTF_8).length); // Korrekt längd
+    private void handleCreateNewConversation(final HttpExchange exchange) throws IOException {
+        final int conversationId = ChatRepository.createConversation();
+        sendJsonResponse(exchange, conversationId, 201);
+    }
 
+    private <T> void sendJsonResponse(final HttpExchange exchange, T responseObject, int statusCode) throws IOException {
+        final String responseJson = objectMapper.writeValueAsString(responseObject);
         byte[] responseBytes = responseJson.getBytes(StandardCharsets.UTF_8);
 
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-        exchange.sendResponseHeaders(200, responseBytes.length);
+        exchange.sendResponseHeaders(statusCode, responseBytes.length);
 
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(responseBytes);
         }
     }
 
-    private void handleCreateNewConversation(final HttpExchange exchange) throws IOException {
-        final int conversationId = ChatRepository.createConversation();
-        String responseJson = objectMapper.writeValueAsString(new IdResponse(conversationId));
+    private GetChatByIdRequestDto readQueryParameterChatById(HttpExchange exchange) throws IOException {
+        String query = exchange.getRequestURI().getQuery();
 
-        byte[] responseBytes = responseJson.getBytes(StandardCharsets.UTF_8);
-
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-        exchange.sendResponseHeaders(200, responseBytes.length);
-
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(responseBytes);
+        if (query == null || query.isEmpty()) {
+            return null; // Ingen query-sträng, returnera null eller hantera felet
         }
+
+        Map<String, String> queryParams = parseQueryParams(query);
+        String idParam = queryParams.get("id");
+
+        if (idParam == null) {
+            sendErrorResponse(exchange, "id saknas", 400);
+            return null; // Om id saknas, returnera null eller kasta ett exception
+        }
+
+        try {
+            int id = Integer.parseInt(idParam);
+            return new GetChatByIdRequestDto(id);
+        } catch (NumberFormatException e) {
+            log.error("Fel vid parsing av id: ", e);
+            return null;
+        }
+    }
+
+    private Map<String, String> parseQueryParams(String query) {
+        return Arrays.stream(query.split("&"))
+                .map(param -> param.split("="))
+                .filter(pair -> pair.length == 2)
+                .collect(Collectors.toMap(pair -> pair[0], pair -> pair[1]));
     }
 
     private ChatRequestDto readRequestBody(HttpExchange exchange) {
@@ -121,5 +165,5 @@ public class ChatHandler implements HttpHandler {
         exchange.close();
     }
 
-    private record IdResponse(int id) {}
+    private record GetChatByIdRequestDto(int id) {}
 }

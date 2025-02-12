@@ -24,8 +24,6 @@ public class ChatService {
     }
 
     public void processQuery(String query, StreamingResponseHandler responseHandler, List<MessageDto> prevChats) {
-        System.out.println("Chatservice startar");
-
         List<ChatMessage> previousMessages = prevChats.stream()
                 .map(this::convertToChatMessage)
                 .toList();

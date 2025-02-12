@@ -21,6 +21,14 @@ sendChatButton.addEventListener('click', () => {
 newConversationButton.addEventListener('click', createNewConversation);
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
+
+fetch("/api/chat/get-chat?id=7", {
+    method: "GET",
+    headers: {
+        "Content-Type": "application/json"
+    }
+}).then(res => res.json()).then(json => console.log(json))
+
 fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
     chatList = jsonRes.chatList;
 
