@@ -48,3 +48,11 @@ button {
     width: 100px;
     margin-top: 10px;
 }
+
+#chats button {
+    width: 200px;
+
+    &.active {
+        border-width: 3px;
+    }
+}

@@ -34,7 +34,7 @@ fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
 
     populateChats(chatList)
 
-    const latestChat = chatList.at(-1);
+    const latestChat = chatList.at(0);
 
     currentConversation = latestChat.conversation;
     currentConversationId = latestChat.id;
@@ -147,6 +147,17 @@ function createNewConversation() {
 }
 
 function chooseChat(id) {
+    // Hämta alla knappar och ta bort "active" klassen
+    document.querySelectorAll("#chats button").forEach(button => {
+        button.classList.remove("active");
+    });
+
+    // Hitta den valda knappen och lägg till "active" klassen
+    const activeButton = document.querySelector(`#chats button[data-chat-id="${id}"]`);
+    if (activeButton) {
+        activeButton.classList.add("active");
+    }
+
     fetch("/api/chat/get-chat?id=" + id, {
         method: "GET",
         headers: {
@@ -163,14 +174,18 @@ function chooseChat(id) {
 function populateChats(chats) {
     const fragment = document.createDocumentFragment();
 
-    chats.forEach(chat => {
+    chats.forEach((chat, index)=> {
         const li = document.createElement('li');
         const btn = document.createElement('button');
-        if (!!chat.label)
-            btn.innerText = chat.label;
-        else
-            btn.innerText = "New chat";
-        btn.setAttribute('data-chat-id', chat.id)
+
+        btn.innerText = chat.label ? chat.label : "New chat";
+        btn.setAttribute('data-chat-id', chat.id);
+
+        // Lägg till "active" på den första knappen
+        if (index === 0) {
+            btn.classList.add("active");
+        }
+
         li.appendChild(btn);
         fragment.appendChild(li);
     });
