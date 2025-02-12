@@ -11,7 +11,7 @@ const textArea = document.querySelector('textarea');
 const thinkArticle = document.querySelector(".thinking");
 
 let chatList;
-let conversation;
+let currentConversation;
 let currentConversationId = 1;
 
 sendChatButton.addEventListener('click', () => {
@@ -20,22 +20,26 @@ sendChatButton.addEventListener('click', () => {
 
 newConversationButton.addEventListener('click', createNewConversation);
 
-fetch("/api").then(res => res.text()).then(text => console.log(text))
+delegateEvent('#chats', 'button', 'click', (event) => {
+    const chatId = event.target.dataset.chatId;
+    currentConversationId = chatId;
+    currentConversation = null;
+    chooseChat(chatId);
+})
 
-fetch("/api/chat/get-chat?id=7", {
-    method: "GET",
-    headers: {
-        "Content-Type": "application/json"
-    }
-}).then(res => res.json()).then(json => console.log(json))
+fetch("/api").then(res => res.text()).then(text => console.log(text))
 
 fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
     chatList = jsonRes.chatList;
 
     populateChats(chatList)
 
-    conversation = chatList.find(chat => chat.id === 1).conversation;
-    populateConversation(conversation);
+    const latestChat = chatList.at(-1);
+
+    currentConversation = latestChat.conversation;
+    currentConversationId = latestChat.id;
+
+    populateConversation(currentConversation);
 });
 
 function doRequestToBackend(question) {
@@ -48,8 +52,8 @@ function doRequestToBackend(question) {
         type: "UserMessage",
         text: question
     }
-    conversation.messages.push(newestquery);
-    populateConversation(conversation);
+    currentConversation.messages.push(newestquery);
+    populateConversation(currentConversation);
 
     fetch("/api/chat", {
         method: "POST",
@@ -121,8 +125,8 @@ function doRequestToBackend(question) {
                 type: "AIMessage",
                 text: text
             };
-            conversation.messages.push(newestAnswer);
-            populateConversation(conversation);
+            currentConversation.messages.push(newestAnswer);
+            populateConversation(currentConversation);
             conversationElement.replaceChildren();
             thinkArticle.replaceChildren();
         })
@@ -138,7 +142,21 @@ function createNewConversation() {
         .then(res => {
             currentConversationId = res.id;
             chatHistoryElement.replaceChildren();
-            conversation.messages = [];
+            currentConversation.messages = [];
+        })
+}
+
+function chooseChat(id) {
+    fetch("/api/chat/get-chat?id=" + id, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+        .then(res => res.json())
+        .then(json => {
+            currentConversation = json.conversation;
+            populateConversation(json.conversation);
         })
 }
 
@@ -147,11 +165,13 @@ function populateChats(chats) {
 
     chats.forEach(chat => {
         const li = document.createElement('li');
+        const btn = document.createElement('button');
         if (!!chat.label)
-            li.innerText = chat.label;
+            btn.innerText = chat.label;
         else
-            li.innerText = "New chat";
-        li.setAttribute('data-chat-id', chat.id)
+            btn.innerText = "New chat";
+        btn.setAttribute('data-chat-id', chat.id)
+        li.appendChild(btn);
         fragment.appendChild(li);
     });
 
@@ -174,4 +194,12 @@ function populateConversation(newConversationToReplaceOld) {
     });
 
     chatHistoryElement.replaceChildren(fragment);
+}
+
+function delegateEvent(parentSelector, childSelector, eventType, callback) {
+    document.querySelector(parentSelector).addEventListener(eventType, function(event) {
+        if (event.target.matches(childSelector)) {
+            callback(event);
+        }
+    });
 }
