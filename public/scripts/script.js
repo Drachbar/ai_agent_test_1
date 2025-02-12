@@ -30,7 +30,7 @@ delegateEvent('#chats', 'button', 'click', (event) => {
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 
 fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
-    chatList = jsonRes.chatList;
+    chatList = jsonRes.chatList.reverse();
 
     populateChats(chatList)
 
