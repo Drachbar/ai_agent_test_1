@@ -39,7 +39,13 @@ delegateEvent('#chats', '.delete-btn', 'click', (event) => {
             }
         })
             .then(response => response.json())
-            .then(jsonResponse => console.log(jsonResponse))
+            .then(jsonResponse => {
+                console.log(jsonResponse)
+                const element = document.querySelector(`li[data-chat-id="${chatId}"]`);
+                if (element) {
+                    element.remove(); // Ta bort elementet från DOM
+                }
+            })
     }
 });
 
@@ -209,7 +215,7 @@ function populateChats(chats) {
             btn.classList.add("active");
         }
 
-
+        li.setAttribute('data-chat-id', chat.id);
         li.appendChild(btn);
         li.appendChild(deleteBtn)
         fragment.appendChild(li);
