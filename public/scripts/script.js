@@ -20,12 +20,28 @@ sendChatButton.addEventListener('click', () => {
 
 newConversationButton.addEventListener('click', createNewConversation);
 
-delegateEvent('#chats', 'button', 'click', (event) => {
+delegateEvent('#chats', '.select-btn', 'click', (event) => {
     const chatId = event.target.dataset.chatId;
     currentConversationId = chatId;
     currentConversation = null;
     chooseChat(chatId);
 })
+
+delegateEvent('#chats', '.delete-btn', 'click', (event) => {
+    const button = event.target.closest('.delete-btn'); // Hitta närmaste .delete-btn
+    if (button) {
+        const chatId = button.dataset.chatId; // Hämta data-attributet från knappen
+        console.log(chatId);
+        fetch("/api/chat/delete-chat?id=" + chatId, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => response.json())
+            .then(jsonResponse => console.log(jsonResponse))
+    }
+});
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 
@@ -222,7 +238,8 @@ function populateConversation(newConversationToReplaceOld) {
 
 function delegateEvent(parentSelector, childSelector, eventType, callback) {
     document.querySelector(parentSelector).addEventListener(eventType, function(event) {
-        if (event.target.matches(childSelector)) {
+        const targetElement = event.target.closest(childSelector);
+        if (targetElement && this.contains(targetElement)) {
             callback(event);
         }
     });

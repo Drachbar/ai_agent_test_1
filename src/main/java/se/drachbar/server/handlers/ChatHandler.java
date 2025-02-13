@@ -55,7 +55,29 @@ public class ChatHandler implements HttpHandler {
             return;
         }
 
+        if ("DELETE".equalsIgnoreCase(requestMethod) && requestPath.contains("/api/chat/delete-chat")) {
+            handleDeleteChat(exchange);
+            return;
+        }
+
         exchange.sendResponseHeaders(405, -1); // 405 Method Not Allowed
+    }
+
+    private void handleDeleteChat(HttpExchange exchange) throws IOException {
+        final GetChatByIdRequestDto request = readQueryParameterChatById(exchange);
+        if (request == null) {
+            sendErrorResponse(exchange, "Tom fråga eller ogiltig JSON!", 400);
+            return;
+        }
+
+        final int id = request.id();
+
+        final boolean chatDeleted = ChatRepository.deleteChat(id);
+        if (chatDeleted) {
+            sendJsonResponse(exchange, chatDeleted, 200);
+        } else {
+            sendErrorResponse(exchange, "Chatten finns inte.", 404);
+        }
     }
 
     private void handleChatRequest(HttpExchange exchange) throws IOException {
