@@ -46,13 +46,31 @@ textarea {
 
 button {
     width: 100px;
-    margin-top: 10px;
 }
 
-#chats button {
-    width: 200px;
+#chats {
 
-    &.active {
-        border-width: 3px;
+    li {
+        margin-bottom: 1rem;
+    }
+
+    button {
+        &.select-btn {
+            display: inline-block;
+            width: 150px;
+            height: 40px;
+            margin-right: 1rem;
+        }
+
+        &.delete-btn {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+        }
+
+        &.active {
+            border-width: 3px;
+            color: #700000;
+        }
     }
 }

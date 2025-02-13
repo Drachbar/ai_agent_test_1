@@ -112,6 +112,19 @@ public class ChatRepository {
         return new ConversationDto(List.of()); // Tom sträng om inget finns
     }
 
+    public static boolean deleteChat(final int id) {
+        String sql = "DELETE FROM conversations WHERE id = ?";
+        try (Connection conn = SQLiteConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            int affectedRows = pstmt.executeUpdate(); // Använd executeUpdate() istället för executeQuery()
+            return affectedRows > 0; // Returnerar true om minst en rad togs bort
+        } catch (Exception e) {
+            log.error("Error deleting chat: ", e);
+        }
+        return false;
+    }
+
     public static void updateChat(final List<MessageDto> messages, int id) {
         String jsonString;
         try {

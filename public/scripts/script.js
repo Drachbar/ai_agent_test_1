@@ -177,16 +177,25 @@ function populateChats(chats) {
     chats.forEach((chat, index)=> {
         const li = document.createElement('li');
         const btn = document.createElement('button');
+        const deleteBtn = document.createElement('button');
+        const deleteImg = document.createElement('img');
+        deleteImg.src = "icons/delete_forever.svg";
+        deleteBtn.setAttribute('data-chat-id', chat.id)
+        deleteBtn.classList.add('delete-btn')
+        deleteBtn.appendChild(deleteImg)
 
         btn.innerText = chat.label ? chat.label : "New chat";
         btn.setAttribute('data-chat-id', chat.id);
+        btn.classList.add('select-btn')
 
         // Lägg till "active" på den första knappen
         if (index === 0) {
             btn.classList.add("active");
         }
 
+
         li.appendChild(btn);
+        li.appendChild(deleteBtn)
         fragment.appendChild(li);
     });
 
