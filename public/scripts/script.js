@@ -51,18 +51,22 @@ delegateEvent('#chats', '.delete-btn', 'click', (event) => {
 
 fetch("/api").then(res => res.text()).then(text => console.log(text))
 
-fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
-    chatList = jsonRes.chatList.reverse();
+getAllChats();
 
-    populateChats(chatList)
+function getAllChats() {
+    fetch("/api/chat/get-all").then(res => res.json()).then(jsonRes => {
+        chatList = jsonRes.chatList.reverse();
 
-    const latestChat = chatList.at(0);
+        populateChats(chatList)
 
-    currentConversation = latestChat.conversation;
-    currentConversationId = latestChat.id;
+        const latestChat = chatList.at(0);
 
-    populateConversation(currentConversation);
-});
+        currentConversation = latestChat.conversation;
+        currentConversationId = latestChat.id;
+
+        populateConversation(currentConversation);
+    });
+}
 
 function doRequestToBackend(question) {
     const requestData = {
@@ -165,6 +169,7 @@ function createNewConversation() {
             currentConversationId = res.id;
             chatHistoryElement.replaceChildren();
             currentConversation.messages = [];
+            getAllChats();
         })
 }
 
